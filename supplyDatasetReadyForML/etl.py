@@ -1,6 +1,5 @@
-
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when
+from pyspark.sql.functions import col as col_new, when, substring
 from pyspark.sql.types import DoubleType, TimestampType
 
 def create_spark_session(app_name):
@@ -13,21 +12,21 @@ def load_raw_data(spark, file_path):
 
 def transform_data(input_data):
     # Convert timestamp columns to the correct data types
-    data_etl = input_data.withColumn("transaction_ts", col("transaction_ts").cast(TimestampType()))
-    data_etl = data_etl.withColumn("customer_enroll_ts", col("customer_enroll_ts").cast(TimestampType()))
+    data_etl = input_data.withColumn("Transaction_ts", col_new("Transaction_ts").cast(TimestampType()))
+    data_etl = data_etl.withColumn("Customer_enroll_ts", col_new("Customer_enroll_ts").cast(TimestampType()))
 
     # Extract the rule index from the 'attr_name' column
-    data_etl = data_etl.withColumn("rule_index", when(col("attr_name").contains("["),
-                                                      col("attr_name").substr(col("attr_name").indexOf("[") + 1, 1)).otherwise(0))
+    data_etl = data_etl.withColumn("rule_index", when(col_new("Attr_name").contains("["),
+                                                      substring(col_new("Attr_name"), col_new("Attr_name").indexOf("[") + 1, 1)).otherwise(0))
 
     # Fill null values in 'rule_index' with 0
     data_etl = data_etl.fillna(0, subset=["rule_index"])
 
     # Convert 'attr_value' column to a numerical value (assuming it contains numeric data)
-    data_etl = data_etl.withColumn("attr_value_num", col("attr_value").cast(DoubleType()))
+    data_etl = data_etl.withColumn("Attr_value_num", col_new("Attr_value").cast(DoubleType()))
 
     # Drop unnecessary columns
-    data_etl = data_etl.drop("attr_name", "attr_value")
+    data_etl = data_etl.drop("Attr_name", "Attr_value")
 
     return data_etl
 
